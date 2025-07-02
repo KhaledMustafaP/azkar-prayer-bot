@@ -11,8 +11,8 @@ from flask import Flask
 from praytimes import PrayTimes
 
 # === إعدادات البوت ===
-BOT_TOKEN = "YOUR_TOKEN_HERE"
-CHAT_ID = "@your_channel_or_id"
+BOT_TOKEN = "8075622956:AAEKedhb3JAIOWlSx_vn3kGZOoPhiYwscJo"
+CHAT_ID = "@wahmidf"
 
 # === إعداد الموقع === (عمان، الأردن كمثال)
 latitude = 31.9539
