@@ -11,8 +11,8 @@ from flask import Flask
 import threading
 
 # === إعدادات البوت ===
-BOT_TOKEN = "ضع التوكن الخاص بك هنا"
-CHAT_ID = "@اسم_القناة_أو_المعرف"
+BOT_TOKEN = "8075622956:AAEKedhb3JAIOWlSx_vn3kGZOoPhiYwscJo"
+CHAT_ID = "@wahmidf"
 
 # إعداد الموقع
 CITY = "Amman"
