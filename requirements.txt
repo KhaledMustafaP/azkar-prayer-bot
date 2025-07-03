@@ -3,3 +3,4 @@ schedule==1.2.1
 nest_asyncio==1.5.8
 flask==2.3.3
 pytz
+requests
