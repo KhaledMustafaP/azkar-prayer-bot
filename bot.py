@@ -135,7 +135,7 @@ app.add_handler(CommandHandler("now", now_command))
 def schedule_tasks():
     schedule.every().day.at("06:00").do(lambda: asyncio.create_task(send_daily_ward()))
     schedule.every().day.at("06:01").do(lambda: asyncio.create_task(send_prayer_times()))
-    schedule.every().day.at("7:00").do(lambda: asyncio.create_task(send_morning_azkar()))
+    schedule.every().day.at("07:00").do(lambda: asyncio.create_task(send_morning_azkar()))
     schedule.every().day.at("16:00").do(lambda: asyncio.create_task(send_evening_azkar()))
 
     schedule_prayer_reminders()
