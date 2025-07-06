@@ -118,6 +118,17 @@ def adjust_time_to_utc(time_str):
     jordan_time = datetime.strptime(time_str, "%H:%M")
     adjusted_time = jordan_time - timedelta(hours=3)
     return adjusted_time.strftime("%H:%M")
+async def send_jumuah_sunnah():
+    msg = (
+        "🕌 *سنن يوم الجمعة*\n\n"
+        "1️⃣ الاغتسال والتطيب.\n"
+        "2️⃣ التبكير إلى صلاة الجمعة.\n"
+        "3️⃣ قراءة سورة الكهف.\n"
+        "4️⃣ الإكثار من الصلاة على النبي ﷺ.\n"
+        "5️⃣ الدعاء في الساعة الأخيرة قبل المغرب.\n\n"
+        "🤍 جمعة مباركة!"
+    )
+    await app.bot.send_message(chat_id=CHAT_ID, text=msg, parse_mode="Markdown")
 
 # تذكير عند الصلاة
 async def send_prayer_reminder(prayer_name):
@@ -153,6 +164,7 @@ def schedule_tasks():
     schedule.every().day.at("07:00").do(lambda: asyncio.create_task(send_morning_azkar()))
     schedule.every().day.at("16:00").do(lambda: asyncio.create_task(send_evening_azkar()))
     schedule.every().day.at("00:01").do(schedule_prayer_reminders)
+    schedule.every().friday.at("06:00").do(lambda: asyncio.create_task(send_jumuah_sunnah()))
 
     schedule_prayer_reminders()
     schedule_fasting_reminders()
