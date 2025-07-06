@@ -4,7 +4,7 @@ import requests
 import nest_asyncio
 import schedule
 import pytz
-from datetime import datetime,timedelta
+from datetime import datetime, timedelta
 from telegram import Bot
 from telegram.ext import Application, CommandHandler
 from flask import Flask
@@ -46,10 +46,6 @@ async def send_daily_ward():
     next_juz = 1 if juz == 30 else juz + 1
     write_juz(next_juz)
 
-def schedule_fasting_reminders():
-    schedule.every().sunday.at("16:00").do(lambda: asyncio.create_task(send_fasting_reminder()))
-    schedule.every().tuesday.at("16:00").do(lambda: asyncio.create_task(send_fasting_reminder()))
-
 # أذكار
 async def send_morning_azkar():
     msg = "☀️ أذكار الصباح:\n- اللهم بك أصبحنا...\n- بسم الله الذي لا يضر...\n- أصبحنا وأصبح الملك لله...\n🕊️ واذكر الله كثيرًا."
@@ -58,26 +54,39 @@ async def send_morning_azkar():
 async def send_evening_azkar():
     msg = "🌙 أذكار المساء:\n- اللهم بك أمسينا...\n- بسم الله الذي لا يضر...\n- أمسينا وأمسى الملك لله...\n🕊️ واذكر الله قبل النوم."
     await app.bot.send_message(chat_id=CHAT_ID, text=msg)
-def adjust_time_to_utc(time_str):
-    jordan_time = datetime.strptime(time_str, "%H:%M")
-    adjusted_time = jordan_time - timedelta(hours=3)
-    return adjusted_time.strftime("%H:%M")
+
+# تذكير بالصيام
+async def send_fasting_reminder():
+    msg = (
+        "🌙 تذكير: صيام الاثنين والخميس سنة عن النبي ﷺ\n\n"
+        "قال رسول الله ﷺ:\n"
+        "«تُعرض الأعمال يوم الاثنين والخميس فأحب أن يُعرض عملي وأنا صائم»\n\n"
+        "🔖 فاحرص على الصيام إن استطعت."
+    )
+    await app.bot.send_message(chat_id=CHAT_ID, text=msg)
+
+def schedule_fasting_reminders():
+    schedule.every().sunday.at("17:00").do(lambda: asyncio.create_task(send_fasting_reminder()))
+    schedule.every().wednesday.at("17:00").do(lambda: asyncio.create_task(send_fasting_reminder()))
 
 # مواقيت الصلاة
 def get_today_prayer_times():
     url = f"https://api.aladhan.com/v1/timingsByCity?city={CITY}&country={COUNTRY}&method=2"
     response = requests.get(url)
-    data = response.json() 
+    data = response.json()
 
     if data['code'] != 200:
         return None
 
+    timings = data['data']['timings']
+
     return {
-        "Fajr": data['data']['timings']['Fajr'],
-        "Dhuhr": data['data']['timings']['Dhuhr'],
-        "Asr": data['data']['timings']['Asr'],
-        "Maghrib": data['data']['timings']['Maghrib'],
-        "Isha": data['data']['timings']['Isha']
+        "Fajr": timings['Fajr'],
+        "Sunrise": timings['Sunrise'],
+        "Dhuhr": timings['Dhuhr'],
+        "Asr": timings['Asr'],
+        "Maghrib": timings['Maghrib'],
+        "Isha": timings['Isha']
     }
 
 async def send_prayer_times():
@@ -88,7 +97,7 @@ async def send_prayer_times():
 
     message = "🕌 مواقيت الصلاة اليوم في عمّان:\n"
     message += f"📿 الفجر: {times['Fajr']}\n"
-    message += f"🌅 الشروق: {data['data']['timings']['Sunrise']}\n"
+    message += f"🌅 الشروق: {times['Sunrise']}\n"
     message += f"🏙️ الظهر: {times['Dhuhr']}\n"
     message += f"🌇 العصر: {times['Asr']}\n"
     message += f"🌆 المغرب: {times['Maghrib']}\n"
@@ -103,6 +112,12 @@ prayer_sunnah = {
     "Maghrib": "🌇 سنة المغرب: 2 بعدية",
     "Isha": "🌙 سنة العشاء: 2 بعدية + الوتر"
 }
+
+# ضبط التوقيت من عمّان إلى UTC
+def adjust_time_to_utc(time_str):
+    jordan_time = datetime.strptime(time_str, "%H:%M")
+    adjusted_time = jordan_time - timedelta(hours=3)
+    return adjusted_time.strftime("%H:%M")
 
 # تذكير عند الصلاة
 async def send_prayer_reminder(prayer_name):
@@ -121,7 +136,7 @@ def schedule_prayer_reminders():
         utc_time = adjust_time_to_utc(time_str)
         schedule.every().day.at(utc_time).do(create_reminder_task(prayer)).tag('prayers')
 
-# الأوامر
+# أوامر البوت
 async def start(update, context):
     await update.message.reply_text("🌞 بوت ورد كالشمس! يرسل ورد يومي، أذكار، وتذكير بالصلاة.")
 
@@ -137,10 +152,10 @@ def schedule_tasks():
     schedule.every().day.at("06:01").do(lambda: asyncio.create_task(send_prayer_times()))
     schedule.every().day.at("07:00").do(lambda: asyncio.create_task(send_morning_azkar()))
     schedule.every().day.at("16:00").do(lambda: asyncio.create_task(send_evening_azkar()))
+    schedule.every().day.at("00:01").do(schedule_prayer_reminders)
 
     schedule_prayer_reminders()
-    schedule.every().day.at("00:01").do(schedule_prayer_reminders)
-    schedule_fasting_reminders()  # ✅ تذكير صيام الاثنين والأربعاء
+    schedule_fasting_reminders()
 
 # السيرفر للفحص
 @flask_app.route('/')
@@ -150,18 +165,18 @@ def home():
 def run_web():
     flask_app.run(host="0.0.0.0", port=10000)
 
-# تشغيل البوت
+# التشغيل
+async def scheduler_loop():
+    while True:
+        schedule.run_pending()
+        await asyncio.sleep(60)
+
 async def main():
     await app.bot.send_message(chat_id=CHAT_ID, text="✅ تم تشغيل البوت.")
     schedule_tasks()
     asyncio.create_task(scheduler_loop())
     threading.Thread(target=run_web).start()
     await app.run_polling()
-
-async def scheduler_loop():
-    while True:
-        schedule.run_pending()
-        await asyncio.sleep(60)
 
 if __name__ == "__main__":
     asyncio.run(main())
