@@ -71,7 +71,7 @@ def schedule_fasting_reminders():
 
 # مواقيت الصلاة
 def get_today_prayer_times():
-    url = f"https://api.aladhan.com/v1/timingsByCity?city={CITY}&country={COUNTRY}&method=2"
+    url = f"https://api.aladhan.com/v1/timingsByCity?city={CITY}&country={COUNTRY}&method=99&fajr=18&isha=18"
     response = requests.get(url)
     data = response.json()
 
